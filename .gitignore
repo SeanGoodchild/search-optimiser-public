@@ -1,0 +1,4 @@
+.venv
+data/*.csv
+data/*
+data/sample.csv

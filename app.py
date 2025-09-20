@@ -1,19 +1,47 @@
 
 import streamlit as st
-from state import store
+from services import store, data
+from ui.charts import chart_with_events
 
-st.set_page_config(page_title="Budget Optimizer", layout="wide")
+
+st.set_page_config(page_title="PMG Budget Optimizer", layout="wide")
+st.title("PMG Budget Optimizer")
+st.markdown("Select custom points on the curves, or allow the optimizer to choose for you.")
 store.init()
 
-st.title("Budget Optimizer")
-st.markdown("Navigate pages to pick points, run optimization, and export results.")
 
-st.sidebar.header("Global Options")
+def main():
+    data.import_and_init('data/sample.csv')
+    build_curves_section()
+    build_optimization_section()
 
-if store.get_result() is not None:
-    res = store.get_result()
-    total_cost = sum(v['cost'] for v in res.values())
-    total_conv  = sum(v.get('conv', 0.0) for v in res.values())
-    st.success(f"Current solution: total cost £{total_cost:,.0f}, conversions {total_conv:,.1f}")
-else:
-    st.info("No optimization run yet. Head to **Curves** or **Optimize** pages.")
+
+def build_curves_section():
+    events = {}
+    strategies = store.get_all_strategies()
+    for strategy_id, strategy in strategies.items():
+        st.subheader(strategy['name'])
+        events[strategy_id] = chart_with_events(strategy)
+    handle_events(events)
+
+
+def handle_events(events: dict) -> None:
+    for strategy_id, event in events.items():
+        if not event:
+            continue
+        clicked_x = float(event[0]['x'])
+        clicked_y = float(event[0]['y'])
+
+        (current_x, current_y) = store.get_strategy(strategy_id)['selected_point']
+        if clicked_x != current_x or clicked_y != current_y:
+            store.set_strategy(strategy_id, {'selected_point': (clicked_x, clicked_y)})
+            st.toast(f"Selected cost £{clicked_x:.2f} with {clicked_y:.2f}")
+            st.rerun()
+
+
+def build_optimization_section():
+    st.header("Optimize")
+
+
+if __name__ == "__main__":
+    main()
