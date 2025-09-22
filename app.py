@@ -6,11 +6,41 @@ import json
 import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 from math import floor, log10, isfinite
+# Notes - st.session_state.[entity_id] can access the state of components by their key
+# e.g. plotly_events key=f"plt_{strategy_id}" -> st.session_state.plt_{strategy_id}
+# Maybe buiild an app def at the start that defines the layout that we will populate later
+# Compare altiar and plotly and bokeh for interactivity
+# Look into using callback fiunctions for interactivity, rather than checking for a change all the time
+# st.cache checks if input has change (hashable). Maybe even st.experimental_memo for unhashable inputs. experimental_singleton for non-input based caching (e.g. model loading
+# ONE level of column nesting, not more. container can be nested (more?)
+# look at all the page_config options. Start with sidebar open. Get Help button, etc
+# st.spinner somewhere fo sho
+# st.stop for when initial data isn't in yet (pre upload!)
+# there are options for getting and setting query params from the URL
+# consider duckdb for parsing and cleaning the initial dataframe? Maybe.
+# st.container is like flexbox div. st.expander is a collapsible container. 
+# Look into st.html (for basic css maybe? Background colour?)
 
 
 st.set_page_config(page_title="PMG Budget Optimizer", layout="wide")
 st.title("PMG Budget Optimizer")
 st.markdown("Select custom points on the curves, or allow the optimizer to choose for you.")
+
+def create_sidebar(all_strategies: dict):
+
+    # Sidebar: data + controls
+    with st.sidebar:
+        st.header("Data")
+        up = st.file_uploader("Upload .csv)", type=["csv"])
+        if up is not None:
+            print("Uploading new data")
+            print(up)
+        col_u1, col_u2 = st.columns(2)
+        with col_u1:
+            use_file = st.button("Use uploaded")
+        with col_u2:
+            use_dummy = st.button("Use dummy data")
+
 
 
 def main():
@@ -19,6 +49,7 @@ def main():
         all_strategies = import_data('data/sample.csv')
         st.session_state['strategies'] = all_strategies
 
+    create_sidebar(all_strategies)
     for strategy_id, strategy in all_strategies.items():
         st.subheader(strategy['name'])
         chart_events = chart_with_events(strategy)
@@ -122,7 +153,7 @@ def make_grid(xmin: float, xmax: float, target_steps: int = 1000) -> np.ndarray:
 
 
 def sensible_increment(xmin: float, xmax: float, target_steps: int = 1000) -> float:
-    """Choose a 1–2–5 style step so that (#steps) <= target_steps."""
+    """Choose a 1/2/5 style step so that (#steps) <= target_steps."""
     if not (isfinite(xmin) and isfinite(xmax)) or xmax <= xmin:
         raise ValueError("Bad range for sensible_increment")
     span = xmax - xmin
