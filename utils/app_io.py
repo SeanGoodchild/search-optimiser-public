@@ -65,6 +65,7 @@ def process_records(records: list[dict]) -> dict:
                         # Identify starting point (the one that matches the current target CPA)
                         if entry['input_z_points'][-1] == row[TARGET_COL]:
                             raw_starting_point_index = idx
+                            entry['raw_starting_point_index'] = raw_starting_point_index
 
                 else:
                     entry["meta"][column_name] = column_value

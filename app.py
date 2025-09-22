@@ -1,7 +1,7 @@
 
 import streamlit as st
 from utils import app_io
-from ui import charts
+from ui import charts, custom_css
 # Maybe buiild an app def at the start that defines the layout that we will populate later
 # Compare altiar and plotly and bokeh for interactivity
 # Look into using callback fiunctions for interactivity, rather than checking for a change all the time
@@ -12,12 +12,21 @@ from ui import charts
 # st.container is like flexbox div. st.expander is a collapsible container. 
 # Look into st.html (for basic css maybe? Background colour?)
 
-st.set_page_config(page_title="PMG Budget Optimizer", layout="wide", initial_sidebar_state="collapsed")
+
+# ! INFINITE LOOP
+
+st.set_page_config(
+    page_title="PMG Budget Optimizer", 
+    layout="wide", 
+    page_icon="static/favicon.ico",
+    initial_sidebar_state="collapsed"
+)
+custom_css.inject_custom_styles()
 # Inject global CSS
 
 
 def main():
-    data_upload_section()
+    # data_upload_section()
     uploaded_data = st.session_state.get('uploaded_data')
     init_app(uploaded_data)
     sidebar()
@@ -25,14 +34,27 @@ def main():
     strategy_section(uploaded_data)
 
 
-def init_app(uploaded_data: dict):
+def init_app(uploaded_data: dict | None):
+    if uploaded_data is None:
+        data_upload_section()
+        # the above section has stop and rerun. So we won't get here until we have data.
     if 'chart_states' not in st.session_state:
         st.session_state['chart_states'] = {}
-        for strategy_id, strategy_data in uploaded_data.items():
-            chart_id = f"chart_{strategy_id}"
-            st.session_state['chart_states'][chart_id] = {
-                "selected_point_index": strategy_data['starting_point_index']
-            }
+    for strategy_id, strategy_data in uploaded_data.items():
+        chart_id = f"chart_{strategy_id}"
+        st.session_state['chart_states'].setdefault(chart_id, {
+            "strategy_id": strategy_id,
+            "strategy_name": strategy_data['name'],
+            "chart_id": chart_id,
+            "starting_point_index": strategy_data['starting_point_index'],
+            "selected_point_index": strategy_data['starting_point_index'],
+            "x_fit": strategy_data['x_fit'],
+            "y_fit": strategy_data['y_fit'],
+            "z_fit": strategy_data['z_fit'],
+            "input_x_points": strategy_data['input_x_points'],
+            "input_y_points": strategy_data['input_y_points'],
+            "input_z_points": strategy_data['input_z_points'],
+        })
 
 
 def data_upload_section():
@@ -64,32 +86,34 @@ def header_section():
 def strategy_section(uploaded_data: dict):
     for strategy_id, strategy_data in uploaded_data.items():
         st.subheader(strategy_data['name'])
-        starting_point_index = strategy_data['starting_point_index']
-        current_chart_state = st.session_state['chart_states'].get(f"chart_{strategy_id}")
+        current_chart_state = st.session_state['chart_states'][f"chart_{strategy_id}"]
         chart_events = charts.build_startegy_chart(strategy_data, current_chart_state)
         handle_events(strategy_id, current_chart_state, chart_events)
-        st.metric('Cost', strategy_data['x_fit'][starting_point_index], delta=None, delta_color="normal")
-        st.metric('Conversions', strategy_data['y_fit'][starting_point_index], delta=None, delta_color="normal")
+        # Chart events will cause an instant rerun.
+        st.divider()
+        current_index = st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index']
+        st.metric('Cost', strategy_data['x_fit'][current_index], delta=None, delta_color="normal")
+        st.metric('Conversions', strategy_data['y_fit'][current_index], delta=None, delta_color="normal")
         st.divider()
 
 
 def handle_events(strategy_id: str, current_chart_state: dict, events: dict) -> None:
     if not events:
+        print('No events')
         return
+    # with st.spinner("Refreshing chart..."):
     e = events[0]  # or handle multi-select
     idx = e.get("pointIndex")
-    if current_chart_state is None or idx != current_chart_state.get('selected_point_index'):
-        st.session_state[f"chart_{strategy_id}"] = current_chart_state
-        x_clicked = e.get("x")
-        y_clicked = e.get("y")
-        st.toast(f"Selected cost £{x_clicked:.2f} with {y_clicked:.2f}")
+    if current_chart_state is None or int(idx) != int(current_chart_state.get('selected_point_index')):
         st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index'] = idx
+        st.toast(f"Selected cost £{e.get("x"):.2f} with {e.get("y"):.2f}")
         st.rerun()
 
 
 
 def sidebar(expanded: bool = True):
     with st.sidebar:
+        custom_css.inject_logo(href=None, color="#0f172a", size_px=70)  # tweak color/size here
         st.sidebar.expander("Help", expanded=True).markdown("""
             ### How to use this app
             1. Upload a CSV file in the sidebar, or use the dummy data.

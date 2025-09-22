@@ -3,7 +3,19 @@ runOnSave = true
 
 [theme]
 primaryColor = "#0c69ea"
-backgroundColor = "#f9fafc"
+backgroundColor = "#eef1f7"
 secondaryBackgroundColor = "#ffffff"
-textColor = "#3e3f42"
-font = "sans serif"
+textColor = "#5a6076"
+# font = "sans serif"
+linkColor = "#0c69ea"
+chartCategoricalColors = ["#0c69ea", "#00ff22ff", "#f63366", "#ff8c00", "#00ff00", "#00ffff", "#0000ff", "#cc00ff", "#ffff00", "#800000"]
+chartSequentialColors = ["#0c69ea", "#ff00d0ff", "#f63366", "#ff8c00", "#00ff00", "#00ffff", "#0000ff", "#cc00ff", "#ffff00", "#800000"]
+baseRadius = '10'
+
+[theme.sidebar]
+primaryColor = "#0c69ea"
+backgroundColor = "#5a6076"
+secondaryBackgroundColor = "#eef1f7"
+textColor = "#ffffffff"
+# 0c69ea = super blue
+# eef1f7 = bg-blue-gray-100 (main light bg background
