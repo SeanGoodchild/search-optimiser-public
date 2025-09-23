@@ -1,6 +1,6 @@
 
 import streamlit as st
-from utils import app_io
+from utils import app_io, modelling
 from ui import charts, custom_css
 # Maybe buiild an app def at the start that defines the layout that we will populate later
 # Compare altiar and plotly and bokeh for interactivity
@@ -26,9 +26,33 @@ def main():
     uploaded_data = st.session_state.get('uploaded_data')
     init_app(uploaded_data)
     sidebar()
-    header_section()
+    with st.container(horizontal=False, width='stretch', horizontal_alignment="left"):
+        header_section()
     strategy_section(uploaded_data)
 
+
+def sum_of_metric(chart_states: dict, metric: str) -> float:
+    total = 0.0
+    total_cost = 0
+    total_conversions = 0
+    for state in chart_states.values():
+        strategy_id = state['strategy_id']
+        selected_index = state['selected_point_index']
+        if metric == 'cost':
+            total += st.session_state['uploaded_data'][strategy_id]['x_fit'][selected_index]
+        elif metric == 'conversions':
+            total += st.session_state['uploaded_data'][strategy_id]['y_fit'][selected_index]
+        elif metric == 'cpa':
+            total_cost += st.session_state['uploaded_data'][strategy_id]['x_fit'][selected_index]
+            total_conversions += st.session_state['uploaded_data'][strategy_id]['y_fit'][selected_index]
+    if metric == 'cpa' and total_conversions > 0:
+        return total_cost / total_conversions
+    
+    return total
+
+
+
+# modelling.optimize_budget(uploaded_data, target_cost=target_cost, target_conversions=None)
 
 def init_app(uploaded_data: dict | None):
     if uploaded_data is None:
@@ -76,8 +100,8 @@ def data_upload_section():
 
 
 def header_section():
-    st.title("PMG Budget Optimizer")
-    st.markdown("Select custom points on the curves, or allow the optimizer to choose for you.")
+    st.title("PMG Budget Optimizer", width='content')
+    st.markdown("Select custom points on the curves, or allow the optimizer to choose for you.", width='content')
 
 
 def strategy_section(uploaded_data: dict):
@@ -94,7 +118,7 @@ def strategy_section(uploaded_data: dict):
                 st.metric('Cost', f"${strategy_data['x_fit'][current_index]:,.0f}")
                 st.metric('Conversions', f"{strategy_data['y_fit'][current_index]:,.2f}")
                 st.metric('CPA', f"${strategy_data['z_fit'][current_index]:,.2f}")
-        st.divider()
+    st.divider()
 
 
 def handle_events(strategy_id: str, current_chart_state: dict, events: dict) -> None:
@@ -110,8 +134,25 @@ def handle_events(strategy_id: str, current_chart_state: dict, events: dict) -> 
 
 def sidebar(expanded: bool = True):
     with st.sidebar:
+        uploaded_data = st.session_state.get('uploaded_data')
         custom_css.inject_logo(href=None, color="#0f172a", size_px=70)  # tweak color/size here
-        st.sidebar.expander("Help", expanded=True).markdown("""
+        total_cost = sum_of_metric(st.session_state['chart_states'], 'cost')
+        total_conversions = sum_of_metric(st.session_state['chart_states'], 'conversions')
+        st.metric('Cost', f"${total_cost:,.0f}")
+        st.metric('Conversions', f"{total_conversions:,.2f}")
+        st.metric('CPA', f"${(total_cost/total_conversions) if total_conversions > 0 else 0:,.2f}")
+        target_cost = st.number_input("Target Cost", min_value=0, value=700000, step=100000, key="target_cost")
+        optimise_picked = st.button("Optimise Me!", key="optimize_button")
+        if optimise_picked:
+            with st.spinner("Optimizing..."):
+                result = modelling.optimize_budget(uploaded_data, target_cost=target_cost, target_conversions=None)
+                # This will update the uploaded_data in place
+                # We then need to update the chart states to reflect the new picks
+                for strategy_id, strategy_data in uploaded_data.items():
+                    st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index'] = result['indices'][strategy_id]-1
+                st.success("Optimization complete!")
+                st.rerun()  # Rerun to refresh all charts with new selections
+        st.sidebar.expander("Help", expanded=False).markdown("""
             ### How to use this app
             1. Upload a CSV file in the sidebar, or use the dummy data.
             2. Select points on the curves to set your desired cost and conversions.

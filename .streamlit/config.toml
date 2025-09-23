@@ -15,7 +15,7 @@ baseRadius = '10'
 [theme.sidebar]
 primaryColor = "#0c69ea"
 backgroundColor = "#5a6076"
-secondaryBackgroundColor = "#eef1f7"
+secondaryBackgroundColor = "#000000ff"
 textColor = "#ffffffff"
 # 0c69ea = super blue
 # eef1f7 = bg-blue-gray-100 (main light bg background
