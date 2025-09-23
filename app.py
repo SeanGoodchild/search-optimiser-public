@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 custom_css.inject_custom_styles()
-# Inject global CSS
+custom_css.remove_top_padding()
 
 
 def main():
@@ -106,15 +106,15 @@ def header_section():
 
 def strategy_section(uploaded_data: dict):
     for strategy_id, strategy_data in uploaded_data.items():
-        with st.container(horizontal=True, width=1200, gap='small', vertical_alignment="center"):
-            with st.container(horizontal=False,  width=800):
+        with st.container(horizontal=True, width=700, gap='small', vertical_alignment="center"):
+            with st.container(horizontal=False,  width=500, horizontal_alignment="left"):
                 st.subheader(strategy_data['name'])
                 current_chart_state = st.session_state['chart_states'][f"chart_{strategy_id}"]
                 chart_events = charts.build_startegy_chart(strategy_data, current_chart_state)
                 handle_events(strategy_id, current_chart_state, chart_events)
                 # Chart events will cause an instant rerun.
                 current_index = st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index']
-            with st.container(horizontal=False,  width=300):
+            with st.container(horizontal=False,  width=150, horizontal_alignment="right"):
                 st.metric('Cost', f"${strategy_data['x_fit'][current_index]:,.0f}")
                 st.metric('Conversions', f"{strategy_data['y_fit'][current_index]:,.2f}")
                 st.metric('CPA', f"${strategy_data['z_fit'][current_index]:,.2f}")

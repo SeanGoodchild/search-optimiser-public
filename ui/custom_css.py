@@ -19,6 +19,27 @@ def inject_custom_styles():
         unsafe_allow_html=True,
     )
 
+def remove_top_padding():
+    st.markdown(
+        """
+        <style>
+        /* Remove the default top padding/margin Streamlit applies */
+        .block-container
+        {
+            padding-top: 0rem;
+            padding-left: 2rem;
+            padding-bottom: 0rem;
+            margin-top: 1rem;
+        }
+        
+        section[data-testid="stSidebar"] {
+            width: 230px !important; # Set the width to your desired value
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 
 def inject_logo(href: str | None = None, color: str = "#111", size_px: int = 36):
     link_open = f'<a href="{href}" target="_blank" rel="noopener">' if href else ""
