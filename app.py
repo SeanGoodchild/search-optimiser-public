@@ -114,7 +114,7 @@ def strategy_section(uploaded_data: dict):
                 handle_events(strategy_id, current_chart_state, chart_events)
                 # Chart events will cause an instant rerun.
                 current_index = st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index']
-            with st.container(horizontal=False,  width=150, horizontal_alignment="right"):
+            with st.container(horizontal=False,  width=175, horizontal_alignment="right"):
                 st.metric('Cost', f"${strategy_data['x_fit'][current_index]:,.0f}")
                 st.metric('Conversions', f"{strategy_data['y_fit'][current_index]:,.2f}")
                 st.metric('CPA', f"${strategy_data['z_fit'][current_index]:,.2f}")
@@ -142,7 +142,7 @@ def sidebar():
         st.metric('Conversions', f"{total_conversions:,.2f}")
         st.metric('CPA', f"${(total_cost/total_conversions) if total_conversions > 0 else 0:,.2f}")
         target_cost = st.number_input("Target Cost", min_value=0, value=700000, step=100000, key="target_cost")
-        optimise_picked = st.button("Optimise Me!", key="optimize_button")
+        optimise_picked = st.button("Optimise Me!", key="optimize_button", type="primary")
         if optimise_picked:
             with st.spinner("Optimizing..."):
                 result = modelling.optimize_budget(uploaded_data, target_cost=target_cost, target_conversions=None)
@@ -151,6 +151,7 @@ def sidebar():
                 for strategy_id, strategy_data in uploaded_data.items():
                     st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index'] = result['indices'][strategy_id]-1
             st.rerun()  # Rerun to refresh all charts with new selections
+        st.divider()
         st.sidebar.expander("Help", expanded=False).markdown("""
             ### How to use this app
             1. Upload a CSV file in the sidebar, or use the dummy data.

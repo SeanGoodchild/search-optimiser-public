@@ -26,7 +26,7 @@ def remove_top_padding():
         /* Remove the default top padding/margin Streamlit applies */
         .block-container
         {
-            padding-top: 0rem;
+            padding-top: 1rem;
             padding-left: 2rem;
             padding-bottom: 0rem;
             margin-top: 1rem;
