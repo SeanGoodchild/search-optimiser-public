@@ -16,7 +16,7 @@ st.set_page_config(
     page_title="PMG Budget Optimizer", 
     layout="wide", 
     page_icon="static/favicon.ico",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 custom_css.inject_custom_styles()
 # Inject global CSS
@@ -132,7 +132,7 @@ def handle_events(strategy_id: str, current_chart_state: dict, events: dict) -> 
         st.rerun()
 
 
-def sidebar(expanded: bool = True):
+def sidebar():
     with st.sidebar:
         uploaded_data = st.session_state.get('uploaded_data')
         custom_css.inject_logo(href=None, color="#0f172a", size_px=70)  # tweak color/size here
@@ -150,8 +150,7 @@ def sidebar(expanded: bool = True):
                 # We then need to update the chart states to reflect the new picks
                 for strategy_id, strategy_data in uploaded_data.items():
                     st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index'] = result['indices'][strategy_id]-1
-                st.success("Optimization complete!")
-                st.rerun()  # Rerun to refresh all charts with new selections
+            st.rerun()  # Rerun to refresh all charts with new selections
         st.sidebar.expander("Help", expanded=False).markdown("""
             ### How to use this app
             1. Upload a CSV file in the sidebar, or use the dummy data.
