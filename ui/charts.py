@@ -80,7 +80,7 @@ def build_startegy_chart(strategy_data: dict, current_chart_state: dict) -> list
     fig.update_yaxes(
         showgrid=True, gridwidth=1, gridcolor="rgba(128,128,128,0.25)",
         zeroline=False, showline=True, linewidth=1, linecolor="rgba(128,128,128,0.5)",
-        tickformat=",.2f",  # conversions with 2dp
+        # tickformat=",.2f",  # conversions with 2dp
         rangemode="tozero"
     )
         
@@ -89,7 +89,7 @@ def build_startegy_chart(strategy_data: dict, current_chart_state: dict) -> list
         clickmode="event+select",
         hovermode="closest",
         height=300,
-        margin=dict(l=30, r=10, t=10, b=30),
+        margin=dict(l=40, r=10, t=10, b=30),
     )
 
     events = plotly_events(
