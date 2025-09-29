@@ -20,8 +20,8 @@ def find_curve_fit(x_series: list, y_series: list, starting_point_index: int) ->
     a = float(y0 / ((x0 + eps) ** b))
 
     # grid incl. anchor span
-    x_min = xs.min() * 0.33
-    x_max = xs.max() * 1.25
+    x_min = xs.min() * 0.75
+    x_max = xs.max() * 1.1
     x_fit = make_grid(x_min, x_max, target_steps=num_steps) 
     y_fit = a * np.power(np.maximum(x_fit, 0.0), b)
     z_fit = x_fit / y_fit

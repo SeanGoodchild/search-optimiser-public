@@ -89,7 +89,17 @@ def build_startegy_chart(strategy_data: dict, current_chart_state: dict) -> list
         clickmode="event+select",
         hovermode="closest",
         height=300,
-        margin=dict(l=40, r=10, t=10, b=30),
+        margin=dict(l=40, r=10, t=10, b=40),
+        xaxis=dict(
+            title="Est. Cost",
+            title_standoff=10,
+            automargin=True
+        ),
+        yaxis=dict(
+            title="Est. Conversions",
+            title_standoff=7,
+            automargin=True
+        ),
     )
 
     events = plotly_events(

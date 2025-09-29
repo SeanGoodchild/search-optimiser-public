@@ -100,24 +100,25 @@ def data_upload_section():
 
 
 def header_section():
-    st.title("PMG Budget Optimizer", width='content')
+    st.title("Google Ads Budget Optimizer", width='content')
     st.markdown("Select custom points on the curves, or allow the optimizer to choose for you.", width='content')
 
 
 def strategy_section(uploaded_data: dict):
     for strategy_id, strategy_data in uploaded_data.items():
         with st.container(horizontal=True, width=700, gap='small', vertical_alignment="center"):
+            st.subheader(strategy_data['name'])
+        with st.container(horizontal=True, width=700, gap='small', vertical_alignment="center"):
             with st.container(horizontal=False,  width=500, horizontal_alignment="left"):
-                st.subheader(strategy_data['name'])
                 current_chart_state = st.session_state['chart_states'][f"chart_{strategy_id}"]
                 chart_events = charts.build_startegy_chart(strategy_data, current_chart_state)
                 handle_events(strategy_id, current_chart_state, chart_events)
                 # Chart events will cause an instant rerun.
                 current_index = st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index']
             with st.container(horizontal=False,  width=175, horizontal_alignment="right"):
-                st.metric('Cost', f"${strategy_data['x_fit'][current_index]:,.0f}")
-                st.metric('Conversions', f"{strategy_data['y_fit'][current_index]:,.2f}")
-                st.metric('CPA', f"${strategy_data['z_fit'][current_index]:,.2f}")
+                st.metric('Est. Cost', f"${strategy_data['x_fit'][current_index]:,.0f}")
+                st.metric('Est. Conversions', f"{strategy_data['y_fit'][current_index]:,.2f}")
+                st.metric('Target CPA', f"${strategy_data['z_fit'][current_index]:,.2f}")
     st.divider()
 
 
@@ -138,11 +139,12 @@ def sidebar():
         custom_css.inject_logo(href=None, color="#0f172a", size_px=70)  # tweak color/size here
         total_cost = sum_of_metric(st.session_state['chart_states'], 'cost')
         total_conversions = sum_of_metric(st.session_state['chart_states'], 'conversions')
+        st.header("Total Weekly Estimates")
         st.metric('Cost', f"${total_cost:,.0f}")
         st.metric('Conversions', f"{total_conversions:,.2f}")
         st.metric('CPA', f"${(total_cost/total_conversions) if total_conversions > 0 else 0:,.2f}")
-        target_cost = st.number_input("Target Cost", min_value=0, value=700000, step=100000, key="target_cost")
-        optimise_picked = st.button("Optimise Me!", key="optimize_button", type="primary")
+        target_cost = st.number_input("Weekly Budget:", min_value=0, value=700000, step=100000, key="target_cost")
+        optimise_picked = st.button("Optimise", key="optimize_button", type="primary")
         if optimise_picked:
             with st.spinner("Optimizing..."):
                 result = modelling.optimize_budget(uploaded_data, target_cost=target_cost, target_conversions=None)
@@ -154,12 +156,9 @@ def sidebar():
         st.divider()
         st.sidebar.expander("Help", expanded=False).markdown("""
             ### How to use this app
-            1. Upload a CSV file in the sidebar, or use the dummy data.
-            2. Select points on the curves to set your desired cost and conversions.
-            3. Review the optimized budget allocation in the Optimize section.
+            1. Select points on the curves to set your desired cost and conversions.
+            2. Review the optimized budget allocation in the Optimize section.
         """)
-
-
 
 
 if __name__ == "__main__":
