@@ -34,7 +34,7 @@ def build_startegy_chart(strategy_data: dict, current_chart_state: dict) -> list
         mode="lines",
         name=f"{strategy_name} Response Curve",
         showlegend=False,
-        hovertemplate="Cost £%{x:.0f}<br>Conversions %{y:.2f}<br>CPA £%{meta:.2f}<extra></extra>",
+        hovertemplate="Cost $%{x:.0f}<br>Conversions %{y:.2f}<br>CPA $%{meta:.2f}<extra></extra>",
     ))
 
     # Plot the actual starting data point
@@ -66,7 +66,7 @@ def build_startegy_chart(strategy_data: dict, current_chart_state: dict) -> list
         marker=dict(size=14, symbol="x"),
         name="Selected",
         showlegend=False,
-        hovertemplate="Cost £%{x:.0f}<br>Conversions %{y:.2f}<br>CPA £%{meta:.2f}<extra></extra>",
+        hovertemplate="Cost $%{x:.0f}<br>Conversions %{y:.2f}<br>CPA $%{meta:.2f}<extra></extra>",
     ))
 
     # Tidy axes: gridlines, ticks, ranges, formatting
@@ -74,7 +74,7 @@ def build_startegy_chart(strategy_data: dict, current_chart_state: dict) -> list
         showgrid=True, gridwidth=1, gridcolor="rgba(128,128,128,0.25)",
         zeroline=False, showline=True, linewidth=1, linecolor="rgba(128,128,128,0.5)",
         tickformat=",.0f",  # nice thousands
-        tickprefix="£",     # if “Cost” on X
+        tickprefix="$",     # if “Cost” on X
         rangemode="tozero"
     )
     fig.update_yaxes(

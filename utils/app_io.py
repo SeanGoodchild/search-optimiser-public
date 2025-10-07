@@ -81,8 +81,6 @@ def process_records(records: list[dict]) -> dict:
             entry.update(curve_fit)
     
             # Starting point is the one that corresponds to the current target CPA
-            
-
             output[strategy_id] = entry
 
         except Exception as e_row:
