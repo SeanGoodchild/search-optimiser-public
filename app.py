@@ -113,34 +113,90 @@ def header_section():
             st.metric("Weighted CPA", f"${sum_of_metric(st.session_state['chart_states'], 'cpa'):,.2f}")
 
 def strategy_section(uploaded_data: dict):
-    st.markdown("## Bidding Strategies")
-    st.caption("Select a point on each curve to test new spend levels and compare against baseline.")
+    """
+    Displays bidding strategy charts and tables using container-based layout.
+    Relies on custom_css.inject_table_styles() for consistent styling.
+    """
+    custom_css.inject_custom_styles()
+
+    with st.container():
+        st.markdown("## Bidding Strategies")
+        st.caption("Select a point on each curve to test new spend levels and compare against baseline performance.")
+
     for strategy_id, strategy_data in uploaded_data.items():
-        with st.container(horizontal=True, width=700, gap='small', vertical_alignment="distribute"):
-            st.subheader(strategy_data['name'])
-        with st.container(horizontal=True, width=1300, gap='small', vertical_alignment="center"):
-            with st.container(horizontal=False,  width=700, horizontal_alignment="distribute"):
-                current_chart_state = st.session_state['chart_states'][f"chart_{strategy_id}"]
-                chart_events = charts.build_startegy_chart(strategy_data, current_chart_state)
-                handle_events(strategy_id, current_chart_state, chart_events)
-                # Chart events will cause an instant rerun.
-                current_index = st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index']
-            with st.container(horizontal=False,  width=500, horizontal_alignment="right"):
-                starting_point_index = strategy_data['starting_point_index']
-                strategy_table_df = pd.DataFrame(
-                    {
-                        "Original Values": [strategy_data['x_fit'][starting_point_index], strategy_data['y_fit'][starting_point_index], strategy_data['z_fit'][starting_point_index]],
-                        "Selected Values": [strategy_data['x_fit'][current_index], strategy_data['y_fit'][current_index], strategy_data['z_fit'][current_index]],
-                        "Incremental Performance": [strategy_data['x_fit'][current_index]-strategy_data['x_fit'][starting_point_index], strategy_data['y_fit'][current_index]-strategy_data['y_fit'][starting_point_index],
-                            (strategy_data['x_fit'][current_index]-strategy_data['x_fit'][starting_point_index]) / (strategy_data['y_fit'][current_index]-strategy_data['y_fit'][starting_point_index]) if (strategy_data['y_fit'][current_index]-strategy_data['y_fit'][starting_point_index]) != 0 else 0],
-                    },
-                    index=["Estimated Cost", "Estimated Conversions", "Estimated CPA"],
-                )
-                strategy_table_df["Original Values"] = strategy_table_df["Original Values"].map("{:,.0f}".format)
-                strategy_table_df["Selected Values"] = strategy_table_df["Selected Values"].map("{:,.0f}".format)
-                strategy_table_df["Incremental Performance"] = strategy_table_df["Incremental Performance"].map("{:,.0f}".format)
-                st.table(strategy_table_df)
+        with st.container(border=False):
+            st.subheader(strategy_data["name"])
+
+            # Horizontal container for chart + table
+            with st.container(horizontal=True, gap="large", vertical_alignment="center"):
+                # ---- Left: Chart ----
+                with st.container(horizontal=False):
+                    current_chart_state = st.session_state["chart_states"][f"chart_{strategy_id}"]
+                    chart_events = charts.build_startegy_chart(strategy_data, current_chart_state)
+                    handle_events(strategy_id, current_chart_state, chart_events)
+                    current_index = current_chart_state["selected_point_index"]
+
+                # ---- Right: Table ----
+                with st.container(horizontal=False):
+                    start_idx = strategy_data["starting_point_index"]
+
+                    # Incremental calculations
+                    delta_cost = strategy_data["x_fit"][current_index] - strategy_data["x_fit"][start_idx]
+                    delta_conv = strategy_data["y_fit"][current_index] - strategy_data["y_fit"][start_idx]
+                    delta_cpa = (
+                        (strategy_data["x_fit"][current_index] / strategy_data["y_fit"][current_index])
+                        - (strategy_data["x_fit"][start_idx] / strategy_data["y_fit"][start_idx])
+                        if strategy_data["y_fit"][current_index] and strategy_data["y_fit"][start_idx]
+                        else 0
+                    )
+
+                    df = pd.DataFrame(
+                        {
+                            "Original Values": [
+                                strategy_data["x_fit"][start_idx],
+                                strategy_data["y_fit"][start_idx],
+                                strategy_data["z_fit"][start_idx],
+                            ],
+                            "Selected Values": [
+                                strategy_data["x_fit"][current_index],
+                                strategy_data["y_fit"][current_index],
+                                strategy_data["z_fit"][current_index],
+                            ],
+                            "Incremental ": [delta_cost, delta_conv, delta_cpa],
+                        },
+                        index=["Estimated Cost", "Estimated Conversions", "Estimated CPA"],
+                    )
+
+                    # Build HTML for styled incremental values
+                    def format_increment(val, row_label):
+                        """Format incremental values with correct sign and color semantics."""
+                        # CPA logic is inverted (lower is better)
+                        if row_label == "Estimated CPA":
+                            css_class = "inc-positive" if val < 0 else "inc-negative" if val > 0 else "inc-neutral"
+                            # Use "-" for improvement (decrease), "+" for decline (increase)
+                            symbol = "-" if val < 0 else "+" if val > 0 else ""
+                        else:
+                            css_class = "inc-positive" if val > 0 else "inc-negative" if val < 0 else "inc-neutral"
+                            symbol = "+" if val > 0 else "-" if val < 0 else ""
+                        return f"<span class='{css_class}'>{symbol}{abs(val):,.0f}</span>"
+
+                    # Convert to formatted HTML dataframe
+                    html_df = df.copy()
+                    html_df["Original Values"] = df["Original Values"].map("{:,.0f}".format)
+                    html_df["Selected Values"] = df["Selected Values"].map("{:,.0f}".format)
+                    html_df["Incremental "] = [
+                        format_increment(v, idx) for v, idx in zip(df["Incremental "], df.index)
+                    ]
+
+                    # Render HTML table directly to preserve class styling
+                    st.markdown(
+                        html_df.to_html(escape=False, index=True, justify="center"),
+                        unsafe_allow_html=True,
+                    )
+
+        st.markdown("<div style='margin-bottom: 2rem;'></div>", unsafe_allow_html=True)
         st.divider()
+
 
 
 def handle_events(strategy_id: str, current_chart_state: dict, events: dict) -> None:

@@ -1,23 +1,52 @@
 import streamlit as st
 
 def inject_custom_styles():
-    st.markdown(
-        """
+    """Applies consistent styling to data tables throughout the app."""
+    st.markdown("""
         <style>
-        /* Load Work Sans */
-        @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap');
+        /* General table layout and font */
+        .stDataFrame table {
+            font-size: 0.95rem !important;
+            border-collapse: collapse !important;
+        }
 
-        /* Apply Work Sans broadly, but avoid overriding icon elements in span */
-        :root,
-        html, body, .stApp,
-        div, p, input, textarea, button,
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Work Sans', sans-serif !important;
+        /* Cell padding and alignment */
+        .stDataFrame table td, .stDataFrame table th {
+            padding: 8px 16px !important;
+            white-space: nowrap !important;
+            vertical-align: middle !important;
+        }
+
+        /* Subtle hover feedback */
+        .stDataFrame tbody tr:hover {
+            background-color: rgba(60, 64, 67, 0.05) !important;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        /* Incremental performance colors (semantic, accessible) */
+        .inc-positive {
+            color: #047857 !important;  /* green - good */
+            font-weight: 600 !important;
+        }
+
+        .inc-negative {
+            color: #b91c1c !important;  /* red - bad */
+            font-weight: 600 !important;
+        }
+
+        .inc-neutral {
+            color: #6b7280 !important;  /* gray - neutral */
+            font-weight: 600 !important;
+        }
+
+        /* Keep the Incremental Δ column right-aligned for numeric clarity */
+        .stDataFrame [data-testid="stTable"] td:nth-child(3),
+        .stDataFrame [data-testid="stTable"] th:nth-child(3) {
+            text-align: right !important;
         }
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+    """, unsafe_allow_html=True)
+
 
 def remove_top_padding():
     st.markdown(
