@@ -116,6 +116,7 @@ def strategy_section(uploaded_data: dict):
     """
     Displays bidding strategy charts and tables using container-based layout.
     Relies on custom_css.inject_table_styles() for consistent styling.
+    Automatically applies currency formatting for cost-like metrics.
     """
     custom_css.inject_custom_styles()
 
@@ -150,6 +151,7 @@ def strategy_section(uploaded_data: dict):
                         else 0
                     )
 
+                    # Build DataFrame dynamically
                     df = pd.DataFrame(
                         {
                             "Original Values": [
@@ -162,33 +164,44 @@ def strategy_section(uploaded_data: dict):
                                 strategy_data["y_fit"][current_index],
                                 strategy_data["z_fit"][current_index],
                             ],
-                            "Incremental ": [delta_cost, delta_conv, delta_cpa],
+                            "Incremental Δ": [delta_cost, delta_conv, delta_cpa],
                         },
                         index=["Estimated Cost", "Estimated Conversions", "Estimated CPA"],
                     )
 
-                    # Build HTML for styled incremental values
+                    # Helper to determine if a metric should be treated as currency
+                    def is_currency(label: str) -> bool:
+                        return any(term in label.lower() for term in ["cost", "spend", "budget", "cpa"])
+
+                    # Helper to format values consistently
+                    def format_value(val, label: str) -> str:
+                        if is_currency(label):
+                            return f"${val:,.0f}"
+                        return f"{val:,.0f}"
+
+                    # Format incremental deltas with color and sign
                     def format_increment(val, row_label):
                         """Format incremental values with correct sign and color semantics."""
-                        # CPA logic is inverted (lower is better)
-                        if row_label == "Estimated CPA":
+                        # CPA logic inverted (lower is better)
+                        if "cpa" in row_label.lower():
                             css_class = "inc-positive" if val < 0 else "inc-negative" if val > 0 else "inc-neutral"
-                            # Use "-" for improvement (decrease), "+" for decline (increase)
-                            symbol = "-" if val < 0 else "+" if val > 0 else ""
+                            symbol = "−" if val < 0 else "+" if val > 0 else ""
                         else:
                             css_class = "inc-positive" if val > 0 else "inc-negative" if val < 0 else "inc-neutral"
-                            symbol = "+" if val > 0 else "-" if val < 0 else ""
-                        return f"<span class='{css_class}'>{symbol}{abs(val):,.0f}</span>"
+                            symbol = "+" if val > 0 else "−" if val < 0 else ""
+                        # Add currency formatting for cost-like metrics
+                        formatted_val = f"${abs(val):,.0f}" if is_currency(row_label) else f"{abs(val):,.0f}"
+                        return f"<span class='{css_class}'>{symbol}{formatted_val}</span>"
 
-                    # Convert to formatted HTML dataframe
+                    # Apply formatting
                     html_df = df.copy()
-                    html_df["Original Values"] = df["Original Values"].map("{:,.0f}".format)
-                    html_df["Selected Values"] = df["Selected Values"].map("{:,.0f}".format)
-                    html_df["Incremental "] = [
-                        format_increment(v, idx) for v, idx in zip(df["Incremental "], df.index)
+                    html_df["Original Values"] = [format_value(v, idx) for v, idx in zip(df["Original Values"], df.index)]
+                    html_df["Selected Values"] = [format_value(v, idx) for v, idx in zip(df["Selected Values"], df.index)]
+                    html_df["Incremental Δ"] = [
+                        format_increment(v, idx) for v, idx in zip(df["Incremental Δ"], df.index)
                     ]
 
-                    # Render HTML table directly to preserve class styling
+                    # Render table with inline HTML (keeps currency and color)
                     st.markdown(
                         html_df.to_html(escape=False, index=True, justify="center"),
                         unsafe_allow_html=True,
@@ -196,6 +209,7 @@ def strategy_section(uploaded_data: dict):
 
         st.markdown("<div style='margin-bottom: 2rem;'></div>", unsafe_allow_html=True)
         st.divider()
+
 
 
 
