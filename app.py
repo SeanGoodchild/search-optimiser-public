@@ -106,7 +106,7 @@ def header_section():
     with st.container(border=True):
         col1, col2, col3= st.columns(3)
         with col1:
-            st.metric("Total Budget", f"${sum_of_metric(st.session_state['chart_states'], 'cost'):,.0f}")
+            st.metric("Total Cost", f"${sum_of_metric(st.session_state['chart_states'], 'cost'):,.0f}")
         with col2:
             st.metric("Total Conversions", f"{sum_of_metric(st.session_state['chart_states'], 'conversions'):,.0f}")
         with col3:
