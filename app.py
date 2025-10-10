@@ -14,8 +14,8 @@ import pandas as pd
 
 
 st.set_page_config(
-    page_title="PMG Budget Optimizer", 
-    layout="wide", 
+    page_title="PMG Budget Optimizer",
+    layout="wide",
     page_icon="static/favicon.ico",
     initial_sidebar_state="expanded"
 )
@@ -98,12 +98,23 @@ def sum_of_metric(chart_states: dict, metric: str) -> float:
     return total
 
 
+# In app.py, modify header_section():
 def header_section():
-    st.title("Google Ads Budget Optimizer", width='content')
-    st.markdown("Select custom points on the curves, or allow the optimizer to choose for you.", width='content')
+    st.title("Google Ads Budget Optimizer")
 
+    #Current state summary
+    with st.container(border=True):
+        col1, col2, col3= st.columns(3)
+        with col1:
+            st.metric("Total Budget", f"${sum_of_metric(st.session_state['chart_states'], 'cost'):,.0f}")
+        with col2:
+            st.metric("Total Conversions", f"{sum_of_metric(st.session_state['chart_states'], 'conversions'):,.0f}")
+        with col3:
+            st.metric("Weighted CPA", f"${sum_of_metric(st.session_state['chart_states'], 'cpa'):,.2f}")
 
 def strategy_section(uploaded_data: dict):
+    st.markdown("## Bidding Strategies")
+    st.caption("Select a point on each curve to test new spend levels and compare against baseline.")
     for strategy_id, strategy_data in uploaded_data.items():
         with st.container(horizontal=True, width=700, gap='small', vertical_alignment="distribute"):
             st.subheader(strategy_data['name'])
@@ -120,7 +131,7 @@ def strategy_section(uploaded_data: dict):
                     {
                         "Original Values": [strategy_data['x_fit'][starting_point_index], strategy_data['y_fit'][starting_point_index], strategy_data['z_fit'][starting_point_index]],
                         "Selected Values": [strategy_data['x_fit'][current_index], strategy_data['y_fit'][current_index], strategy_data['z_fit'][current_index]],
-                        "Incremental Performance": [strategy_data['x_fit'][current_index]-strategy_data['x_fit'][starting_point_index], strategy_data['y_fit'][current_index]-strategy_data['y_fit'][starting_point_index], 
+                        "Incremental Performance": [strategy_data['x_fit'][current_index]-strategy_data['x_fit'][starting_point_index], strategy_data['y_fit'][current_index]-strategy_data['y_fit'][starting_point_index],
                             (strategy_data['x_fit'][current_index]-strategy_data['x_fit'][starting_point_index]) / (strategy_data['y_fit'][current_index]-strategy_data['y_fit'][starting_point_index]) if (strategy_data['y_fit'][current_index]-strategy_data['y_fit'][starting_point_index]) != 0 else 0],
                     },
                     index=["Estimated Cost", "Estimated Conversions", "Estimated CPA"],
@@ -153,7 +164,14 @@ def sidebar():
         target_cost = st.number_input(label='Cost $', value=total_cost, format="%0.2f")
         target_convs = st.number_input(label='Conversions', value=total_conversions)
         target_cpa = st.number_input(label='CPA', value=total_cost/total_conversions if total_conversions > 0 else 0)
-        optimise_picked = st.button("Optimise", key="optimize_button", type="primary")
+        st.markdown("**Budget Allocation**")
+        optimise_picked = st.button(
+            "Optimize Budget",
+            key="optimize_button",
+            type="primary",
+            use_container_width=True
+        )
+        st.caption("Redistributes your current budget across channels to minimize weighted CPA")
         if optimise_picked:
             result = modelling.optimize_budget(uploaded_data, target_cost=target_cost, target_conversions=None)
             # This will update the uploaded_data in place
@@ -162,12 +180,19 @@ def sidebar():
                 st.session_state['chart_states'][f"chart_{strategy_id}"]['selected_point_index'] = result['indices'][strategy_id]-1
             st.rerun()  # Rerun to refresh all charts with new selections
         st.divider()
-        st.sidebar.expander("Help", expanded=False).markdown("""
-            ### How to use this app
-            1. Select points on the curves to set your desired cost and conversions.
-            2. Review the optimized budget allocation in the Optimize section.
-        """)
+        with st.expander("Help & Tips", expanded=False):
+            st.markdown("""
+            **1. Review Current State**  
+            The baseline metrics show your current weekly allocation.
 
+            **2. Adjust Individual Strategies**  
+            Click any point on a curve to simulate different spend levels.  
+            Watch the metrics update in real-time.
+
+            **3. Optimize Automatically**  
+            Click "Optimize Budget" to let the model find the best  
+            distribution across all strategies to minimize CPA.
+            """)
 
 if __name__ == "__main__":
     main()
