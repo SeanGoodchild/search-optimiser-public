@@ -2,8 +2,9 @@ import plotly.graph_objects as go
 from streamlit_plotly_events import plotly_events
 
 custom_colors = [
-    "#5a6076", "#0c69ea", "#0c69ea", "#0c69ea", "#0c69ea",
-    "#00FFFF", "#0000FF", "#CC00FF", "#FFFF00", "#800000"
+    "#0c69ea",  # Primary blue (keep for main curve)
+    "#5a6076",  # Text gray (for secondary elements)
+    "#f63366",  # Accent for alerts
 ]
 
 
@@ -83,7 +84,7 @@ def build_startegy_chart(strategy_data: dict, current_chart_state: dict) -> list
         # tickformat=",.2f",  # conversions with 2dp
         rangemode="tozero"
     )
-        
+
     fig.update_layout(
         colorway=custom_colors,
         clickmode="event+select",
